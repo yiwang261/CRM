@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    <mapper namespace="com.wang.crm.Mapper.ActivityMapper">
+
+    <resultMap id="BaseResultMap" type="com.wang.crm.Pojo.Entity.Activity" >
+            <id     property="id"           column="id" jdbcType="INTEGER"/>
+            <result property="ownerId"      column="owner_id" jdbcType="INTEGER"/>
+            <result property="name"         column="name" jdbcType="VARCHAR"/>
+            <result property="startTime"    column="start_time" jdbcType="TIMESTAMP"/>
+            <result property="endTime"      column="end_time" jdbcType="TIMESTAMP"/>
+            <result property="cost"         column="cost" jdbcType="DECIMAL"/>
+            <result property="description"  column="description" jdbcType="VARCHAR"/>
+            <result property="createTime"   column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="createBy"     column="create_by" jdbcType="INTEGER"/>
+            <result property="editTime"     column="edit_time" jdbcType="TIMESTAMP"/>
+            <result property="editBy"       column="edit_by" jdbcType="INTEGER"/>
+    </resultMap>
+    <resultMap id="ActivityDTOMap" type="com.wang.crm.Pojo.VO.ActivityVO">
+        <id property="activityId" column="id"/>
+        <result property="ownerName" column="owner_name" jdbcType="VARCHAR" />
+        <result property="editByName" column="edit_name" jdbcType="VARCHAR" />
+        <result property="createByName" column="create_name" jdbcType="VARCHAR" />
+        <association property="activity" javaType="com.wang.crm.Pojo.Entity.Activity" resultMap="BaseResultMap"/>
+    </resultMap>
+
+    <sql id="Base_Column_List" >
+        id,owner_id,name,
+        start_time,end_time,cost,
+        description,create_time,create_by,
+        edit_time,edit_by
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from t_activity
+        where  id = #{id,jdbcType=INTEGER} 
+    </select>
+
+    <select id="getActivityDTOList" parameterType="com.wang.crm.Pojo.Query.ActivityQuery" resultMap="ActivityDTOMap">
+        select t1.*,
+                t_u.name as owner_name,
+                t_u.id as owner_id
+        from t_activity as t1
+            left join t_user as t_u
+                on t1.owner_id = t_u.id
+            <where>
+                <if test="ownerId != null and ownerId != ''">
+                    and owner_id = #{ownerId}
+                </if>
+                <if test="name != null and name != ''">
+                    and t1.name like concat('%',#{name},'%')
+                </if>
+                <if test="cost != null and cost != ''">
+                    and t1.cost >= #{cost}
+                </if>
+                <if test="startTime != null and startTime != ''">
+                    and t1.start_time &gt;= #{startTime,javaType=String,jdbcType=DATE}
+                </if>
+                <if test="endTime != null and endTime != ''">
+                    and t1.end_time &lt;= #{endTime,javaType=String,jdbcType=DATE}
+                </if>
+                <if test="createTime != null and createTime != ''">
+                    and t1.create_time &gt;= #{createTime,javaType=String,jdbcType=DATE}
+                </if>
+                ${filterSql}
+            </where>
+    </select>
+
+    <select id="getActivityDTOById" resultMap="ActivityDTOMap">
+        select t1.*,
+               t2.name  as owner_name,
+               t2.id    as owner_id,
+               t3.name  as create_name,
+               t4.name  as edit_name
+        from t_activity as t1
+            left join t_user as t2 on t1.owner_id = t2.id
+        left join t_user t3 on t1.create_by = t3.id
+        left join t_user t4 on t1.edit_by = t4.id
+        where t1.id = #{id,jdbcType=INTEGER}
+    </select>
+    <select id="getOnGoingActivityList"  resultType="com.wang.crm.Pojo.Entity.Activity">
+        select id,name from t_activity
+        where start_time &lt; now() and end_time &gt; now()
+    </select>
+    <select id="getActivityCount" resultType="java.lang.Integer">
+        select count(0) from t_activity
+    </select>
+
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+        delete from t_activity
+        where  id = #{id,jdbcType=INTEGER} 
+    </delete>
+
+    <delete id="deleteActivityBatch">
+        delete from t_activity
+            where id in
+        <foreach collection="ids" separator=","  open="("   item="id" close=")" >
+            #{id}
+        </foreach>
+    </delete>
+
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.wang.crm.Pojo.Entity.Activity" useGeneratedKeys="true">
+        insert into t_activity
+        ( id,owner_id,name
+        ,start_time,end_time,cost
+        ,description,create_time,create_by
+        ,edit_time,edit_by)
+        values (#{id,jdbcType=INTEGER},#{ownerId,jdbcType=INTEGER},#{name,jdbcType=VARCHAR}
+        ,#{startTime,jdbcType=TIMESTAMP},#{endTime,jdbcType=TIMESTAMP},#{cost,jdbcType=DECIMAL}
+        ,#{description,jdbcType=VARCHAR},#{createTime,jdbcType=TIMESTAMP},#{createBy,jdbcType=INTEGER}
+        ,#{editTime,jdbcType=TIMESTAMP},#{editBy,jdbcType=INTEGER})
+    </insert>
+
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.wang.crm.Pojo.Entity.Activity" useGeneratedKeys="true">
+        insert into t_activity
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="ownerId != null">owner_id,</if>
+                <if test="name != null">name,</if>
+                <if test="startTime != null">start_time,</if>
+                <if test="endTime != null">end_time,</if>
+                <if test="cost != null">cost,</if>
+                <if test="description != null">description,</if>
+                <if test="createTime != null">create_time,</if>
+                <if test="createBy != null">create_by,</if>
+                <if test="editTime != null">edit_time,</if>
+                <if test="editBy != null">edit_by,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id,jdbcType=INTEGER},</if>
+                <if test="ownerId != null">#{ownerId,jdbcType=INTEGER},</if>
+                <if test="name != null">#{name,jdbcType=VARCHAR},</if>
+                <if test="startTime != null">#{startTime,jdbcType=TIMESTAMP},</if>
+                <if test="endTime != null">#{endTime,jdbcType=TIMESTAMP},</if>
+                <if test="cost != null">#{cost,jdbcType=DECIMAL},</if>
+                <if test="description != null">#{description,jdbcType=VARCHAR},</if>
+                <if test="createTime != null">#{createTime,jdbcType=TIMESTAMP},</if>
+                <if test="createBy != null">#{createBy,jdbcType=INTEGER},</if>
+                <if test="editTime != null">#{editTime,jdbcType=TIMESTAMP},</if>
+                <if test="editBy != null">#{editBy,jdbcType=INTEGER},</if>
+        </trim>
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.wang.crm.Pojo.Entity.Activity">
+        update t_activity
+        <set>
+                <if test="ownerId != null">
+                    owner_id = #{ownerId,jdbcType=INTEGER},
+                </if>
+                <if test="name != null">
+                    name = #{name,jdbcType=VARCHAR},
+                </if>
+                <if test="startTime != null">
+                    start_time = #{startTime,jdbcType=TIMESTAMP},
+                </if>
+                <if test="endTime != null">
+                    end_time = #{endTime,jdbcType=TIMESTAMP},
+                </if>
+                <if test="cost != null">
+                    cost = #{cost,jdbcType=DECIMAL},
+                </if>
+                <if test="description != null">
+                    description = #{description,jdbcType=VARCHAR},
+                </if>
+                <if test="createTime != null">
+                    create_time = #{createTime,jdbcType=TIMESTAMP},
+                </if>
+                <if test="createBy != null">
+                    create_by = #{createBy,jdbcType=INTEGER},
+                </if>
+                <if test="editTime != null">
+                    edit_time = #{editTime,jdbcType=TIMESTAMP},
+                </if>
+                <if test="editBy != null">
+                    edit_by = #{editBy,jdbcType=INTEGER},
+                </if>
+        </set>
+        where   id = #{id,jdbcType=INTEGER} 
+    </update>
+
+    <update id="updateByPrimaryKey" parameterType="com.wang.crm.Pojo.Entity.Activity">
+        update t_activity
+        set 
+            owner_id =  #{ownerId,jdbcType=INTEGER},
+            name =  #{name,jdbcType=VARCHAR},
+            start_time =  #{startTime,jdbcType=TIMESTAMP},
+            end_time =  #{endTime,jdbcType=TIMESTAMP},
+            cost =  #{cost,jdbcType=DECIMAL},
+            description =  #{description,jdbcType=VARCHAR},
+            create_time =  #{createTime,jdbcType=TIMESTAMP},
+            create_by =  #{createBy,jdbcType=INTEGER},
+            edit_time =  #{editTime,jdbcType=TIMESTAMP},
+            edit_by =  #{editBy,jdbcType=INTEGER}
+        where   id = #{id,jdbcType=INTEGER} 
+    </update>
+</mapper>

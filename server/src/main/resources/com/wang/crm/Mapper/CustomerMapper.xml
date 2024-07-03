@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wang.crm.Mapper.CustomerMapper">
+
+    <resultMap id="BaseResultMap" type="com.wang.crm.Pojo.Entity.Customer">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="clueId" column="clue_id" jdbcType="INTEGER"/>
+            <result property="product" column="product" jdbcType="INTEGER"/>
+            <result property="description" column="description" jdbcType="VARCHAR"/>
+            <result property="nextContactTime" column="next_contact_time" jdbcType="TIMESTAMP"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="createBy" column="create_by" jdbcType="INTEGER"/>
+            <result property="editTime" column="edit_time" jdbcType="TIMESTAMP"/>
+            <result property="editBy" column="edit_by" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <resultMap id="CustomerDTOMap" type="customerDTO">
+        <id property="id" column="customer_id" jdbcType="INTEGER"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+        <result property="phone" column="phone" jdbcType="VARCHAR"/>
+        <result property="weChat" column="weChat" jdbcType="VARCHAR"/>
+        <result property="email" column="email" jdbcType="VARCHAR"/>
+        <result property="age" column="age" jdbcType="INTEGER"/>
+        <result property="address" column="address" jdbcType="VARCHAR"/>
+        <result property="nextContactTime" column="next_contact_time" jdbcType="INTEGER"/>
+        <association property="clueDTO"
+                     javaType="clueDTO"
+                     resultMap="com.wang.crm.Mapper.ClueMapper.ClueDTOResultMap"
+                     />
+    </resultMap>
+
+    <resultMap id="excelMap" type="com.wang.crm.Result.CustomerExcel">
+        <id                     column="id" jdbcType="INTEGER"/>
+        <result property="ownerName" column="ownerName" jdbcType="VARCHAR"/>
+        <result property="activityName" column="activityName" jdbcType="VARCHAR"/>
+        <result property="phone" column="phone" jdbcType="VARCHAR"/>
+        <result property="fullName" column="fullName" jdbcType="VARCHAR"/>
+        <result property="weixin" column="weixin" jdbcType="VARCHAR"/>
+        <result property="email" column="email" jdbcType="VARCHAR"/>
+        <result property="qq" column="qq" jdbcType="VARCHAR"/>
+        <result property="age" column="age" jdbcType="INTEGER"/>
+        <result property="address" column="address" jdbcType="VARCHAR"/>
+        <result property="job" column="job" jdbcType="VARCHAR"/>
+        <result property="needLoadName" column="needLoadName" jdbcType="VARCHAR"/>
+        <result property="appellationName" column="appellationName" jdbcType="VARCHAR"/>
+        <result property="yearIncome" column="yearIncome" jdbcType="DECIMAL"/>
+        <result property="productName" column="productName" jdbcType="VARCHAR"/>
+        <result property="sourceName" column="sourceName" jdbcType="VARCHAR"/>
+        <result property="description" column="description" jdbcType="VARCHAR"/>
+        <result property="nextContactTime" column="nextContactTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,clue_id,product,
+        description,next_contact_time,create_time,
+        create_by,edit_time,edit_by
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from t_customer
+        where  id = #{id,jdbcType=INTEGER} 
+    </select>
+
+    <select id="getCustomerDTOByPage" resultMap="CustomerDTOMap">
+        select t_customer.id customer_id,
+               t_clue.full_name name,
+               t_clue.phone phone,
+               t_clue.weixin weChat,
+               t_clue.next_contact_time,
+                owner.id owner_id,owner.name owner_name,
+               t_activity.id activity_id, t_activity.name activity_name,
+               tdv1.id appellation_id, tdv1.type_value appellation_name,
+               tdv2.id need_loan_id, tdv2.type_value need_loan_name,
+               tdv3.id intention_state_id, tdv3.type_value intention_state_name,
+               tdv4.id state_id,tdv4.type_value state_name,
+               tdv5.id source_id, tdv5.type_value source_name,
+               t_p.id intention_product_id, t_p.name intention_product_name
+            from t_customer
+        left join t_clue on t_customer.clue_id = t_clue.id
+        left join t_user owner on t_clue.owner_id = owner.id
+        left join t_activity on t_clue.activity_id = t_activity.id
+        left join t_dic_value tdv1  on tdv1.id = t_clue.appellation
+        left join t_dic_value tdv2  on tdv2.id = t_clue.need_loan
+        left join t_dic_value tdv3  on tdv3.id = t_clue.intention_state
+        left join t_dic_value tdv4  on tdv4.id = t_clue.state
+        left join t_dic_value tdv5  on tdv5.id = t_clue.source
+        left join t_product   t_p   on t_customer.product = t_p.id
+        <where>
+            ${filterSql}
+        </where>
+
+    </select>
+    <select id="getCustomerExcelByIds" resultMap="CustomerDTOMap">
+        select t_customer.id customer_id,
+                t_clue.full_name full_name,
+                t_clue.phone phone,
+                t_clue.weixin weChat,
+                t_clue.next_contact_time,
+                t_clue.age,t_clue.email,
+                t_clue.address address,t_clue.qq,t_clue.description,
+                t_clue.year_income year_income,t_clue.job job,
+                owner.id owner_id,owner.name owner_name,
+                t_activity.id activity_id, t_activity.name activity_name,
+                tdv1.id appellation_id, tdv1.type_value appellation_name,
+                tdv2.id need_loan_id, tdv2.type_value need_loan_name,
+                tdv3.id intention_state_id, tdv3.type_value intention_state_name,
+                tdv4.id state_id,tdv4.type_value state_name,
+                tdv5.id source_id, tdv5.type_value source_name,
+                t_p.id intention_product_id, t_p.name intention_product_name
+        from t_customer
+            left join t_clue on t_customer.clue_id = t_clue.id
+            left join t_user owner on t_clue.owner_id = owner.id
+            left join t_activity on t_clue.activity_id = t_activity.id
+            left join t_dic_value tdv1  on tdv1.id = t_clue.appellation
+            left join t_dic_value tdv2  on tdv2.id = t_clue.need_loan
+            left join t_dic_value tdv3  on tdv3.id = t_clue.intention_state
+            left join t_dic_value tdv4  on tdv4.id = t_clue.state
+            left join t_dic_value tdv5  on tdv5.id = t_clue.source
+            left join t_product   t_p   on t_customer.product = t_p.id
+        <where>
+            t_customer.id in
+            <foreach collection="ids" item="id" separator="," open="(" close=")">
+                #{id}
+            </foreach>
+        </where>
+    </select>
+    <select id="getAllOrByIdsCustomerExcel" resultType="com.wang.crm.Result.CustomerExcel">
+        select t_customer.id ,
+               t_clue.full_name,t_clue.phone,t_clue.weixin,t_clue.next_contact_time,
+               t_clue.year_income yearIncome,t_clue.address,t_clue.age,t_clue.job,t_clue.description,
+               t_clue.full_name fullName,t_clue.email,t_clue.qq,t_clue.weixin weixin,
+               t_clue.next_contact_time nextContactTIme,
+        owner.name ownerName,
+        t_activity.name activityName,tdv_appellation.type_value appellationName,
+        tdv_need_loan.type_value needLoadName,tdv_intention_state.type_value intentionStateName,
+        tdv_state.type_value stateName,tdv_source.type_value sourceName,t_product.name productName
+
+        from t_customer
+            left join t_clue on t_clue.id = t_customer.clue_id
+            left join t_dic_value tdv_appellation           on t_clue.appellation = tdv_appellation.id
+            left join t_dic_value tdv_need_loan             on t_clue.need_loan = tdv_need_loan.id
+            left join t_dic_value tdv_intention_state       on t_clue.intention_state = tdv_intention_state.id
+            left join t_dic_value tdv_state                 on t_clue.state = tdv_state.id
+            left join t_dic_value tdv_source                on t_clue.source = tdv_source.id
+            left join t_activity on t_clue.activity_id = t_activity.id
+            left join t_user owner on t_clue.owner_id = owner.id
+            left join t_product on t_customer.product = t_product.id
+        <where>
+            <if test="ids != null and ids.size() > 0">
+                t_customer.id in
+                <foreach collection="ids" item="id" separator="," open="(" close=")">
+                    #{id}
+                </foreach>
+            </if>
+            ${filterSql}
+        </where>
+    </select>
+    <select id="getCustomerCount" resultType="java.lang.Integer">
+        select count(0) from t_customer
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from t_customer
+        where  id = #{id,jdbcType=INTEGER} 
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.wang.crm.Pojo.Entity.Customer" useGeneratedKeys="true">
+        insert into t_customer
+        ( id,clue_id,product
+        ,description,next_contact_time,create_time
+        ,create_by,edit_time,edit_by
+        )
+        values (#{id,jdbcType=INTEGER},#{clueId,jdbcType=INTEGER},#{product,jdbcType=INTEGER}
+        ,#{description,jdbcType=VARCHAR},#{nextContactTime,jdbcType=TIMESTAMP},#{createTime,jdbcType=TIMESTAMP}
+        ,#{createBy,jdbcType=INTEGER},#{editTime,jdbcType=TIMESTAMP},#{editBy,jdbcType=INTEGER}
+        )
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.wang.crm.Pojo.Entity.Customer" useGeneratedKeys="true">
+        insert into t_customer
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="clueId != null">clue_id,</if>
+                <if test="product != null">product,</if>
+                <if test="description != null">description,</if>
+                <if test="nextContactTime != null">next_contact_time,</if>
+                <if test="createTime != null">create_time,</if>
+                <if test="createBy != null">create_by,</if>
+                <if test="editTime != null">edit_time,</if>
+                <if test="editBy != null">edit_by,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id,jdbcType=INTEGER},</if>
+                <if test="clueId != null">#{clueId,jdbcType=INTEGER},</if>
+                <if test="product != null">#{product,jdbcType=INTEGER},</if>
+                <if test="description != null">#{description,jdbcType=VARCHAR},</if>
+                <if test="nextContactTime != null">#{nextContactTime,jdbcType=TIMESTAMP},</if>
+                <if test="createTime != null">#{createTime,jdbcType=TIMESTAMP},</if>
+                <if test="createBy != null">#{createBy,jdbcType=INTEGER},</if>
+                <if test="editTime != null">#{editTime,jdbcType=TIMESTAMP},</if>
+                <if test="editBy != null">#{editBy,jdbcType=INTEGER},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.wang.crm.Pojo.Entity.Customer">
+        update t_customer
+        <set>
+                <if test="clueId != null">
+                    clue_id = #{clueId,jdbcType=INTEGER},
+                </if>
+                <if test="product != null">
+                    product = #{product,jdbcType=INTEGER},
+                </if>
+                <if test="description != null">
+                    description = #{description,jdbcType=VARCHAR},
+                </if>
+                <if test="nextContactTime != null">
+                    next_contact_time = #{nextContactTime,jdbcType=TIMESTAMP},
+                </if>
+                <if test="createTime != null">
+                    create_time = #{createTime,jdbcType=TIMESTAMP},
+                </if>
+                <if test="createBy != null">
+                    create_by = #{createBy,jdbcType=INTEGER},
+                </if>
+                <if test="editTime != null">
+                    edit_time = #{editTime,jdbcType=TIMESTAMP},
+                </if>
+                <if test="editBy != null">
+                    edit_by = #{editBy,jdbcType=INTEGER},
+                </if>
+        </set>
+        where   id = #{id,jdbcType=INTEGER} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.wang.crm.Pojo.Entity.Customer">
+        update t_customer
+        set 
+            clue_id =  #{clueId,jdbcType=INTEGER},
+            product =  #{product,jdbcType=INTEGER},
+            description =  #{description,jdbcType=VARCHAR},
+            next_contact_time =  #{nextContactTime,jdbcType=TIMESTAMP},
+            create_time =  #{createTime,jdbcType=TIMESTAMP},
+            create_by =  #{createBy,jdbcType=INTEGER},
+            edit_time =  #{editTime,jdbcType=TIMESTAMP},
+            edit_by =  #{editBy,jdbcType=INTEGER}
+        where   id = #{id,jdbcType=INTEGER} 
+    </update>
+</mapper>

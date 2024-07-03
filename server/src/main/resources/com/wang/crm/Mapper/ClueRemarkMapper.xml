@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wang.crm.Mapper.ClueRemarkMapper">
+
+    <resultMap id="BaseResultMap" type="com.wang.crm.Pojo.Entity.ClueRemark">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="clueId" column="clue_id" jdbcType="INTEGER"/>
+            <result property="noteWay" column="note_way" jdbcType="INTEGER"/>
+            <result property="noteContent" column="note_content" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="createBy" column="create_by" jdbcType="INTEGER"/>
+            <result property="editTime" column="edit_time" jdbcType="TIMESTAMP"/>
+            <result property="editBy" column="edit_by" jdbcType="INTEGER"/>
+            <result property="deleted" column="deleted" jdbcType="INTEGER"/>
+    </resultMap>
+
+
+    <resultMap id="ClueRemarkDTOResultMap" type="com.wang.crm.Pojo.DTO.ClueRemarkDTO">
+        <id property="id" column="id" jdbcType="INTEGER"/>
+        <result property="clueId" column="clue_id" jdbcType="INTEGER"/>
+        <result property="noteContent" column="note_content" jdbcType="VARCHAR"/>
+
+        <result property="createBy" column="create_id" jdbcType="INTEGER"/>
+        <result property="createByName" column="create_by_name" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+
+        <result property="editByName" column="edit_by_name" jdbcType="VARCHAR"/>
+        <result property="editTime" column="edit_time" jdbcType="TIMESTAMP"/>
+        <result property="editBy" column="edit_id" jdbcType="INTEGER"/>
+
+        <result property="noteWay" column="note_way" jdbcType="INTEGER"/>
+        <result property="noteWayName" column="noteWayName" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <resultMap id="ClueRemarkResultMap" type="com.wang.crm.Pojo.DTO.ClueRemarkDTO">
+        <id column="id" jdbcType="INTEGER" property="id" />
+        <result column="clue_id" jdbcType="INTEGER" property="clueId" />
+        <result column="note_way" jdbcType="INTEGER" property="noteWay" />
+        <result column="note_content" jdbcType="VARCHAR" property="noteContent" />
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+        <result column="create_by" jdbcType="INTEGER" property="createBy" />
+        <result column="edit_time" jdbcType="TIMESTAMP" property="editTime" />
+        <result column="edit_by" jdbcType="INTEGER" property="editBy" />
+        <result column="deleted" jdbcType="INTEGER" property="deleted" />
+        <!--一对一关联-->
+        <association property="createByDO" javaType="com.wang.crm.Pojo.Entity.User">
+            <id column="createById" jdbcType="INTEGER" property="id" />
+            <result column="createByName" jdbcType="VARCHAR" property="name" />
+        </association>
+        <!--一对一关联-->
+        <association property="editByDO" javaType="com.wang.crm.Pojo.Entity.User">
+            <id column="editById" jdbcType="INTEGER" property="id" />
+            <result column="editByName" jdbcType="VARCHAR" property="name" />
+        </association>
+        <!--一对一关联-->
+        <association property="noteWayDO" javaType="com.wang.crm.Pojo.Entity.DicValue">
+            <id column="noteWayId" jdbcType="INTEGER" property="id" />
+            <result column="noteWayName" jdbcType="VARCHAR" property="typeValue" />
+        </association>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,clue_id,note_way,
+        note_content,create_time,create_by,
+        edit_time,edit_by,deleted
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from t_clue_remark
+        where  id = #{id,jdbcType=INTEGER} 
+    </select>
+
+    <select id="getClueRemarkDTOListByPage" parameterType="ClueRemarkQuery" resultMap="ClueRemarkDTOResultMap">
+        select t_c_r.id  , t_c_r.clue_id , t_c_r.note_content ,
+               t_c_r.note_way,t_dic_value.type_value as noteWayName,
+               t_create.id create_id, t_create.name create_by_name, t_c_r.create_time ,
+               t_edit.id   edit_id , t_edit.name    edit_by_name,   t_c_r.edit_time
+           from t_clue_remark as t_c_r
+        left join t_user as t_create on t_create.id = t_c_r.create_by
+        left join t_user as t_edit on t_edit.id = t_c_r.edit_by
+        left join t_dic_value on t_c_r.note_way = t_dic_value.id
+        <where>
+            (t_c_r.deleted = 0 or t_c_r.deleted is null)
+             and t_c_r.clue_id = #{clueId,jdbcType=INTEGER}
+             <if test="filterSql != null and filterSql != ''">
+                 ${filterSql}
+             </if>
+        </where>
+    </select>
+    <select id="getClueRemarkByPage" parameterType="java.lang.Integer" resultMap="ClueRemarkResultMap">
+        select
+            tcr.*,
+            tu1.id createById, tu1.name createByName,
+            tu2.id editById, tu2.name editByName,
+            tdv.id noteWayId, tdv.type_value noteWayName
+        from t_clue_remark tcr left join t_user tu1 on tcr.create_by = tu1.id
+                               left join t_user tu2 on tcr.edit_by = tu2.id
+                               left join t_dic_value tdv on tcr.note_way = tdv.id
+        where tcr.clue_id = #{clueId, jdbcType=INTEGER}
+          and (tcr.deleted is null or tcr.deleted = 0)
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+        delete from t_clue_remark
+        where  id = #{id,jdbcType=INTEGER} 
+    </delete>
+    <delete id="deleteByClueId" parameterType="java.lang.Integer">
+        delete from t_clue_remark
+        where clue_id = #{clueId,jdbcType=INTEGER}
+    </delete>
+    <delete id="deleteByClueIds" parameterType="java.lang.Integer">
+        delete from t_clue_remark
+        where clue_id in
+        <foreach collection="clueIds" item="clueId" open="(" separator="," close=")">
+            #{clueId,jdbcType=INTEGER}
+        </foreach>
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.wang.crm.Pojo.Entity.ClueRemark" useGeneratedKeys="true">
+        insert into t_clue_remark
+        ( id,clue_id,note_way
+        ,note_content,create_time,create_by
+        ,edit_time,edit_by,deleted
+        )
+        values (#{id,jdbcType=INTEGER},#{clueId,jdbcType=INTEGER},#{noteWay,jdbcType=INTEGER}
+        ,#{noteContent,jdbcType=VARCHAR},#{createTime,jdbcType=TIMESTAMP},#{createBy,jdbcType=INTEGER}
+        ,#{editTime,jdbcType=TIMESTAMP},#{editBy,jdbcType=INTEGER},#{deleted,jdbcType=INTEGER}
+        )
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.wang.crm.Pojo.Entity.ClueRemark" useGeneratedKeys="true">
+        insert into t_clue_remark
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="clueId != null">clue_id,</if>
+                <if test="noteWay != null">note_way,</if>
+                <if test="noteContent != null">note_content,</if>
+                <if test="createTime != null">create_time,</if>
+                <if test="createBy != null">create_by,</if>
+                <if test="editTime != null">edit_time,</if>
+                <if test="editBy != null">edit_by,</if>
+                <if test="deleted != null">deleted,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id,jdbcType=INTEGER},</if>
+                <if test="clueId != null">#{clueId,jdbcType=INTEGER},</if>
+                <if test="noteWay != null">#{noteWay,jdbcType=INTEGER},</if>
+                <if test="noteContent != null">#{noteContent,jdbcType=VARCHAR},</if>
+                <if test="createTime != null">#{createTime,jdbcType=TIMESTAMP},</if>
+                <if test="createBy != null">#{createBy,jdbcType=INTEGER},</if>
+                <if test="editTime != null">#{editTime,jdbcType=TIMESTAMP},</if>
+                <if test="editBy != null">#{editBy,jdbcType=INTEGER},</if>
+                <if test="deleted != null">#{deleted,jdbcType=INTEGER},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.wang.crm.Pojo.Entity.ClueRemark">
+        update t_clue_remark
+        <set>
+                <if test="clueId != null">
+                    clue_id = #{clueId,jdbcType=INTEGER},
+                </if>
+                <if test="noteWay != null">
+                    note_way = #{noteWay,jdbcType=INTEGER},
+                </if>
+                <if test="noteContent != null">
+                    note_content = #{noteContent,jdbcType=VARCHAR},
+                </if>
+                <if test="createTime != null">
+                    create_time = #{createTime,jdbcType=TIMESTAMP},
+                </if>
+                <if test="createBy != null">
+                    create_by = #{createBy,jdbcType=INTEGER},
+                </if>
+                <if test="editTime != null">
+                    edit_time = #{editTime,jdbcType=TIMESTAMP},
+                </if>
+                <if test="editBy != null">
+                    edit_by = #{editBy,jdbcType=INTEGER},
+                </if>
+                <if test="deleted != null">
+                    deleted = #{deleted,jdbcType=INTEGER},
+                </if>
+        </set>
+        where   id = #{id,jdbcType=INTEGER} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.wang.crm.Pojo.Entity.ClueRemark">
+        update t_clue_remark
+        set 
+            clue_id =  #{clueId,jdbcType=INTEGER},
+            note_way =  #{noteWay,jdbcType=INTEGER},
+            note_content =  #{noteContent,jdbcType=VARCHAR},
+            create_time =  #{createTime,jdbcType=TIMESTAMP},
+            create_by =  #{createBy,jdbcType=INTEGER},
+            edit_time =  #{editTime,jdbcType=TIMESTAMP},
+            edit_by =  #{editBy,jdbcType=INTEGER},
+            deleted =  #{deleted,jdbcType=INTEGER}
+        where   id = #{id,jdbcType=INTEGER} 
+    </update>
+</mapper>
